@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MTG Deck Analyzer</title>
+    <link rel="stylesheet" href="/static/styles.css?v=20260501a" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="panel form-panel">
+        <div class="hero">
+          <p class="eyebrow">FastAPI + Scryfall</p>
+          <h1>MTG Deck Analyzer</h1>
+          <p class="subtitle">Paste a decklist, sanity-check the format rules, and get a cleaner snapshot of what the deck is trying to do.</p>
+        </div>
+
+        <div class="toolbelt">
+          <div class="toolbelt-field">
+            <label for="sample-deck">Sample deck</label>
+            <select id="sample-deck" name="sampleDeck">
+              <option value="">Choose a preset…</option>
+              <option value="commander-spellslinger">Commander — Baral Spellslinger</option>
+              <option value="modern-burn">Modern — Burn Snapshot</option>
+              <option value="pioneer-spirits">Pioneer — Azorius Spirits Snapshot</option>
+            </select>
+          </div>
+          <div class="toolbelt-actions">
+            <button type="button" id="load-sample-button" class="secondary-button">Load preset</button>
+            <button type="button" id="clear-form-button" class="ghost-button">Clear form</button>
+            <button type="button" id="copy-share-link-button" class="ghost-button">Copy share link</button>
+          </div>
+        </div>
+
+        <div class="results-toolbar section-card draft-toolbar utility-strip">
+          <div>
+            <p class="toolbar-label">Draft</p>
+            <p id="draft-status" class="status">Autosave ready.</p>
+          </div>
+          <div class="results-toolbar-actions">
+            <button type="button" id="restore-draft-button" class="secondary-button small-button">Restore</button>
+            <button type="button" id="clear-draft-button" class="ghost-button small-button">Clear</button>
+          </div>
+        </div>
+
+        <div id="deck-form-root"></div>
+      </section>
+
+      <section class="panel results-panel">
+        <section class="section-card results-nav-card">
+          <div id="results-nav-root"></div>
+        </section>
+
+        <div id="empty-state" class="empty-state">
+          <p>Run an analysis to see deck stats, warnings, recommendations, and card details here.</p>
+        </div>
+
+        <div id="results" class="results hidden">
+          <div id="results-summary-root"></div>
+
+          <div class="grid chart-grid" id="visuals-section">
+            <section class="section-card" id="mana-curve-chart-section">
+              <div class="section-heading static-heading"><h3>Mana curve chart</h3><span class="pill neutral">Visual</span></div>
+              <div id="mana-curve-chart" class="chart"></div>
+            </section>
+            <section class="section-card" id="type-breakdown-chart-section">
+              <div class="section-heading static-heading"><h3>Type breakdown chart</h3><span class="pill neutral">Visual</span></div>
+              <div id="type-breakdown-chart" class="chart"></div>
+            </section>
+          </div>
+
+          <div id="archetype-panel-root"></div>
+
+          <div class="grid summary-grid" id="summary-grid">
+            <details class="section-card collapsible" id="mana-curve-section">
+              <summary class="section-heading"><h3>Mana curve</h3><span class="pill neutral">Stats</span></summary>
+              <ul id="mana-curve" class="kv-list"></ul>
+            </details>
+            <details class="section-card collapsible" id="type-breakdown-section">
+              <summary class="section-heading"><h3>Type breakdown</h3><span class="pill neutral">Stats</span></summary>
+              <ul id="type-breakdown" class="kv-list"></ul>
+            </details>
+            <details class="section-card collapsible" id="classification-section">
+              <summary class="section-heading"><h3>Classifications</h3><span class="pill neutral">Stats</span></summary>
+              <ul id="classification-counts" class="kv-list"></ul>
+            </details>
+          </div>
+
+          <div id="card-surface-root"></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+    <script type="module" src="/static/app.js?v=20260501b"></script>
+  </body>
+</html>

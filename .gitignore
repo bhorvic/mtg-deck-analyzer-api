@@ -1,0 +1,9 @@
+.venv/
+.venv.broken-*/
+node_modules/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+.coverage
+mtg-deck-analyzer.service

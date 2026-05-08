@@ -1,0 +1,14 @@
+{
+  "name": "mtg-deck-analyzer-api",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build:react": "esbuild app/static/react-src/results-nav.jsx app/static/react-src/deck-form.jsx app/static/react-src/results-summary.jsx app/static/react-src/archetype-panel.jsx app/static/react-src/card-surface.jsx --bundle --format=esm --jsx=automatic --minify --define:process.env.NODE_ENV=\"'production'\" --outdir=app/static/react",
+    "check:react": "npm run build:react"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  }
+}
