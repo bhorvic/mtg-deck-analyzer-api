@@ -4,6 +4,10 @@ A FastAPI app and browser UI for analyzing Magic: The Gathering decklists.
 
 It accepts pasted decklists, normalizes messy real-world input, looks up card data from Scryfall, and returns format-aware validation, deck statistics, role tags, and likely archetypes.
 
+## Live app
+
+Try it here: <https://mtg.bhorvicbot.com/>
+
 ## Highlights
 
 - **Supports multiple formats**
