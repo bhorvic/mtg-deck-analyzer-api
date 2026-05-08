@@ -1,19 +1,12 @@
-# mtg-deck-analyzer-api
+# MTG Deck Analyzer API
 
-FastAPI app for analyzing Magic: The Gathering decklists, with a small web UI and format-aware validation.
+A FastAPI app and browser UI for analyzing Magic: The Gathering decklists.
 
-## What it does
+It accepts pasted decklists, normalizes messy real-world input, looks up card data from Scryfall, and returns format-aware validation, deck statistics, role tags, and likely archetypes.
 
-- Parse pasted decklists and optional sideboards
-- Look up card metadata from Scryfall
-- Return deck statistics:
-  - total cards
-  - unique cards
-  - mana curve
-  - type breakdown
-  - deck color identity
-  - lightweight card role tags (ramp, draw, removal, boardwipe)
-- Run format-specific checks for:
+## Highlights
+
+- **Supports multiple formats**
   - Commander
   - Standard
   - Pioneer
@@ -21,26 +14,35 @@ FastAPI app for analyzing Magic: The Gathering decklists, with a small web UI an
   - Pauper
   - Legacy
   - Vintage
-- Return likely deck archetypes using a mix of heuristics and format-aware signature matching
-  - current starter coverage includes shells like Burn, Tron, Hammer Time, Spirits, Phoenix, Rakdos Midrange, Shops, Stax, Artifacts, Lands, Enchantress, and more
-- Support Commander validation for:
-  - deck size
-  - sideboard warnings
+- **Format-aware validation** for deck size, card legality, duplicates, and other rules checks
+- **Commander-specific rules support**
   - commander legality
-  - commander color identity violations
-  - common two-commander pairings (Partner, Friends forever, Background, Doctor's companion)
-  - duplicate-count exceptions from oracle text
-- Serve a browser UI plus Swagger docs
+  - commander color identity checks
+  - commander-in-main-deck warnings
+  - common two-commander patterns like Partner, Friends forever, Background, and Doctor's companion
+- **Deck analysis output** including mana curve, type breakdown, color identity, unique-card counts, and lightweight role tagging
+- **Archetype detection** using heuristics plus format-aware signature matching
+- **Forgiving parser** for noisy exports and pasted lists from deck sites and text files
+- **Built-in web UI** for interactive testing and exploration
+- **Swagger docs** for API inspection and direct requests
+
+## Why this project exists
+
+Most deck tools are either very strict about input format or focused on a narrow slice of analysis. This project aims to be more practical:
+
+- paste in messy decklists without hand-cleaning them first
+- get fast feedback on legality and structure
+- surface useful summary stats and warnings
+- make the same logic available through both an API and a lightweight web app
 
 ## Tech stack
 
-- FastAPI
-- Pydantic
-- httpx
-- Jinja2
-- pytest
+- **Backend:** FastAPI, Pydantic, httpx, Jinja2
+- **Frontend:** vanilla JS with progressively introduced React islands
+- **Tooling:** pytest, esbuild
+- **Data source:** Scryfall
 
-## Project layout
+## Project structure
 
 ```text
 app/
@@ -48,26 +50,46 @@ app/
   core/            # app settings
   models/          # request/response models
   services/        # parser, analyzer, Scryfall client
-  static/          # frontend JS + CSS
+  static/          # frontend JS, CSS, React bundles, client modules
   templates/       # Jinja templates
-tests/             # API and parser tests
+tests/             # parser, API, and Scryfall client coverage
 ```
 
 ## Run locally
+
+### 1) Create a virtual environment and install Python dependencies
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+```
+
+### 2) Install frontend dependencies
+
+```bash
+npm install
+```
+
+### 3) Build the React islands
+
+```bash
+npm run build:react
+```
+
+### 4) Start the app
+
+```bash
 uvicorn app.main:app --reload
 ```
 
 Then open:
 
-- App: http://127.0.0.1:8000/
-- Swagger docs: http://127.0.0.1:8000/docs
+- App: <http://127.0.0.1:8000/>
+- Swagger docs: <http://127.0.0.1:8000/docs>
+- Health check: <http://127.0.0.1:8000/health>
 
-## Example request
+## Example API request
 
 ```bash
 curl -X POST http://127.0.0.1:8000/deck/analyze \
@@ -80,26 +102,56 @@ curl -X POST http://127.0.0.1:8000/deck/analyze \
   }'
 ```
 
-## Test
+## Frontend notes
+
+The UI is intentionally being improved incrementally instead of rewritten all at once.
+
+Current interface work includes things like:
+
+- parser preview
+- warnings and feedback cards
+- result summaries
+- archetype panel
+- card surface/details
+- filtering, sorting, copy/export helpers
+- React-based UI islands layered into the existing app
+
+Additional implementation notes live in [`FRONTEND_REACT_NOTES.md`](FRONTEND_REACT_NOTES.md).
+
+## Parser tolerance
+
+One of the main goals is accepting the kind of input people actually paste.
+
+The parser currently handles things like:
+
+- section headers such as `Commander`, `Sideboard`, `Creatures (12)`, and labeled groupings like `Interaction:`
+- inline markers such as `Commander: 1x Baral` and `SB:1—Pongify`
+- count/name separator variations like `4xLightning Bolt`, `2 - Mishra's Bauble`, `3 — Counterspell`, `1: Sol Ring`, and tab-delimited lines
+- ignored helper noise like maybeboard sections, checklist bullets, comments, and title lines before real sections
+- trailing metadata cleanup such as `(CMM)`, `[Commander]`, `{Promo}`, `(foil)`, and `*F*`
+
+## Testing
+
+Run the test suite with:
 
 ```bash
 .venv/bin/pytest -q
 ```
 
-## Notes
+## Notes and limitations
 
-- No API key is required for basic Scryfall usage.
-- Scryfall lookups now use a simple in-process cache (default TTL: 1 hour) to avoid refetching the same cards repeatedly.
-- This is a solid prototype, but card-role tagging is still heuristic rather than rules-perfect.
+- No API key is required for normal Scryfall usage
+- Scryfall lookups use a simple in-process cache to reduce repeated card fetches
+- Role tagging and archetype classification are heuristic, not oracle-perfect
+- This project is designed as a practical analyzer and UI prototype, not a tournament rules engine
 
-## Parser tolerance highlights
+## Roadmap ideas
 
-The deck parser is deliberately forgiving about a lot of real-world paste noise. Current cleanup/normalization includes things like:
+- broaden archetype coverage across more formats and commanders
+- improve card-role classification depth
+- continue React migration where it meaningfully improves maintainability
+- add richer visualizations and deck comparison workflows
 
-- section headers such as `Commander`, `Sideboard`, `Creatures (12)`, and generic labels like `Interaction:`
-- inline markers such as `Commander: 1x Baral` and `SB:1—Pongify`
-- quantity/name separator variants like `4xLightning Bolt`, `2 - Mishra's Bauble`, `3 — Counterspell`, `1: Sol Ring`, and tab-delimited lines
-- ignored helper noise like maybeboard sections, checklist bullets, comments, and deck-title lines before real sections
-- trailing metadata cleanup for tags like `(CMM)`, `[Commander]`, `{Promo}`, `(foil)`, and `*F*`
+## License
 
-The browser UI also exposes a normalized parser preview so you can see how the client-side preflight parser is interpreting a pasted list before you submit it.
+No license has been added yet.
