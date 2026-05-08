@@ -49,7 +49,16 @@ export async function runDeckAnalysis({
   });
 
   if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
+    let message = `Request failed with status ${response.status}`;
+    try {
+      const errorPayload = await response.json();
+      if (errorPayload?.detail) {
+        message = errorPayload.detail;
+      }
+    } catch {
+      // Ignore JSON parse errors and fall back to the generic status message.
+    }
+    throw new Error(message);
   }
 
   const data = await response.json();

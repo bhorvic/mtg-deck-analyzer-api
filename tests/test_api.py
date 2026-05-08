@@ -1,9 +1,17 @@
 from fastapi.testclient import TestClient
+import pytest
 
-from app.main import app
+from app.main import analyze_rate_limiter, app
 from app.services.scryfall import ScryfallClient
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def reset_analyze_rate_limiter() -> None:
+    analyze_rate_limiter.reset()
+    yield
+    analyze_rate_limiter.reset()
 
 
 def test_homepage_loads() -> None:
@@ -1577,3 +1585,58 @@ def test_commander_color_identity_violation(monkeypatch) -> None:
     data = response.json()
     assert data["color_identity_violations"] == ["Lightning Bolt"]
     assert "Cards outside commander color identity: Lightning Bolt" in data["warnings"]
+
+
+def test_analyze_endpoint_rate_limits_by_forwarded_ip(monkeypatch) -> None:
+    async def fake_get_cards(self, names):
+        return {
+            "Island": {
+                "name": "Island",
+                "mana_cost": "",
+                "cmc": 0,
+                "colors": [],
+                "color_identity": ["U"],
+                "type_line": "Basic Land — Island",
+                "oracle_text": "({T}: Add {U}.)",
+                "scryfall_uri": "https://scryfall.com/card/example/island",
+                "legalities": {"commander": "legal"},
+            },
+            "Baral, Chief of Compliance": {
+                "name": "Baral, Chief of Compliance",
+                "color_identity": ["U"],
+                "type_line": "Legendary Creature — Human Wizard",
+                "oracle_text": "Instant and sorcery spells you cast cost {1} less to cast.",
+                "scryfall_uri": "https://scryfall.com/card/example/baral",
+                "legalities": {"commander": "legal"},
+            },
+        }
+
+    monkeypatch.setattr(ScryfallClient, "get_cards", fake_get_cards)
+    analyze_rate_limiter.reset()
+    original_max_requests = analyze_rate_limiter.max_requests
+    original_window_seconds = analyze_rate_limiter.window_seconds
+    analyze_rate_limiter.max_requests = 2
+    analyze_rate_limiter.window_seconds = 60
+
+    payload = {
+        "name": "Rate Limit Test",
+        "format": "commander",
+        "commander": "Baral, Chief of Compliance",
+        "decklist": "99 Island",
+    }
+    headers = {"CF-Connecting-IP": "203.0.113.10"}
+
+    try:
+        first = client.post("/deck/analyze", json=payload, headers=headers)
+        second = client.post("/deck/analyze", json=payload, headers=headers)
+        limited = client.post("/deck/analyze", json=payload, headers=headers)
+    finally:
+        analyze_rate_limiter.max_requests = original_max_requests
+        analyze_rate_limiter.window_seconds = original_window_seconds
+        analyze_rate_limiter.reset()
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert limited.status_code == 429
+    assert limited.json()["detail"] == "Rate limit reached for deck analysis. Please wait a minute and try again."
+    assert limited.headers["Retry-After"]

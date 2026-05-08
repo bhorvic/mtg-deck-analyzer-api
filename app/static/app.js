@@ -130,8 +130,9 @@ const deckForm = initDeckForm("deck-form-root", {
     } catch (error) {
       console.error(error);
       updateResultsNavigator(appState.analysis);
-      setStatus("Something went wrong. Check the API response or browser console.", "error");
-      showToast("Analysis failed. Check the warning text or console.", "error");
+      const message = error instanceof Error ? error.message : "Something went wrong. Please try again.";
+      setStatus(message, "error");
+      showToast(message, "error");
     } finally {
       finishSubmit(deckForm.setSubmitting);
     }
