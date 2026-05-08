@@ -140,6 +140,7 @@ Run the test suite with:
 
 ## Notes and limitations
 
+- This app was built entirely using an OpenClaw agentic agent workflow
 - No API key is required for normal Scryfall usage
 - Scryfall lookups use a simple in-process cache to reduce repeated card fetches
 - Role tagging and archetype classification are heuristic, not oracle-perfect
